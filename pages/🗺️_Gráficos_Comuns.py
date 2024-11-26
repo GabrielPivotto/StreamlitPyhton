@@ -1,9 +1,7 @@
 #importa as bib
 import streamlit as st
-import geopandas as gpd
 import pandas as pd
 import numpy as np
-import geopandas as gpd
 import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
