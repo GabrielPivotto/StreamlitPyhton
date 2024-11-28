@@ -71,3 +71,51 @@ with st.container():
         color_continuous_scale='Viridis')
 
     st.plotly_chart(fig)
+
+with st.container():
+    df['SP_DTINTER'] = pd.to_datetime(df['SP_DTINTER'], format='%Y%m%d')
+    df = df[(df['SP_DTINTER'].dt.month == 8) & (df['SP_DTINTER'].dt.year == 2023)]
+
+    agrupa = df.groupby(['SP_DTINTER']).agg(
+        SOMA = ('SP_QT_PROC', 'sum')
+    )
+
+    # Gerar dados de exemplo
+    mes = 8  # Novembro
+    ano = 2023
+    dias_no_mes = pd.date_range(f'{ano}-{mes}-01', f'{ano}-{mes}-28', freq='D')
+    valores = np.random.randint(0, 100, len(dias_no_mes))
+
+    # Criar um DataFrame
+    df = pd.DataFrame({'Data': agrupa.index, 'Valor': agrupa.SOMA})
+
+    # Adicionar informações auxiliares
+    df['Dia_da_Semana'] = df['Data'].dt.dayofweek  # Segunda=0, Domingo=6
+    df['Semana'] = df['Data'].dt.isocalendar().week - df['Data'].dt.isocalendar().week.min()
+
+    # Criar a matriz para o heatmap
+    heatmap_data = df.pivot(index='Semana', columns='Dia_da_Semana', values='Valor')
+
+    # Criar o gráfico
+    fig = go.Figure(data=go.Heatmap(
+        z=heatmap_data.values,
+        x=['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'],
+        y=heatmap_data.index,
+        colorscale='Viridis',
+        colorbar_title="Valor"
+    ))
+
+    # Ajustar a ordem do eixo Y para crescente
+    fig.update_layout(
+        title=f"Distribuição de Procedimentos Totais por Dia - {mes}/{ano}",
+        xaxis_title="Dia da Semana",
+        yaxis_title="Semanas do Mês",
+        yaxis=dict(
+            tickmode='array',
+            tickvals=heatmap_data.index,
+            ticktext=[f"Semana {i}" for i in heatmap_data.index],
+            autorange="reversed"  # Reverte a ordem padrão do eixo Y
+        )
+    )
+
+    st.plotly_chart(fig)
