@@ -44,3 +44,35 @@ with st.container():
     fig.update_layout(mapbox_style="open-street-map")
 
     st.plotly_chart(fig)
+
+with st.container():
+    st.write("---")
+
+    df = load_data()
+
+    df_forasteiros = df[df['SP_CIDADE_P_EXT'] != 'Cidade do RS']
+
+    df_municipio = df_forasteiros.groupby(['SP_CIDADE_H', 'latitude_h', 'longitude_h'], as_index=False).size()
+    df_municipio['numero_de_pacientes'] = df_municipio['size']
+    # Cria o gráfico scatter_mapbox
+    fig = px.scatter_mapbox(df_municipio,
+                            lat="latitude_h",
+                            lon="longitude_h",
+                            size="numero_de_pacientes",  
+                            color="numero_de_pacientes", 
+                            hover_name="SP_CIDADE_H",
+                            hover_data={
+                                "SP_CIDADE_H": False, 
+                                "latitude_h": False,  
+                                "longitude_h": False,  
+                                "size": False ,       
+                                "numero_de_pacientes" : True
+                            },
+                            title="Internações de Pacientes Fora do Estado no RS",
+                            size_max=50,  
+                            zoom=5.7,
+                            color_continuous_scale=px.colors.cyclical.IceFire).update_layout(height=1000)
+
+    fig.update_layout(mapbox_style="open-street-map")
+
+    st.plotly_chart(fig)
