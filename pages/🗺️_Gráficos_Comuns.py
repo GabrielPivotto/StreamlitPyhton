@@ -16,44 +16,88 @@ def load_data():
 
 #geracao de graficos dentro dos containers (regioes que agrupam o conteudo em um "objeto")
 with st.container():
-    st.write("---")
+    default_value = "Ordenar por Tempo Médio"
+
+    choices = ["Ordenar por Tempo Médio", "Ordenar por Procedimento mais Comum"]
+    selected = st.selectbox("Escolha uma opção", choices, index=choices.index(default_value))
+
+    if(selected == "Ordenar por Tempo Médio"):
+        dados = load_data()
+        dados['TEMPO_DT'] = dados['SP_DTSAIDA'] - dados['SP_DTINTER']
+
+        agrupa = dados.groupby('SP_N_PROC').agg(
+            QTD = ('SP_QT_PROC', 'sum'),
+            MEDIA_DT = ('TEMPO_DT', 'mean')
+        )
+
+        ordenado = agrupa.sort_values(by= 'MEDIA_DT', ascending = False)
+
+        fig = px.bar(agrupa, y=agrupa.index, x='MEDIA_DT', barmode = 'group', color = 'MEDIA_DT', title="Procedimentos Com Maior Tempo Médio de Internação").update_layout(
+            xaxis_title="Tempo Médio de Internação", 
+            yaxis_title="Nome do Procedimento",
+            yaxis={'categoryorder': 'total ascending'},
+            height=650,
+            width=1150
+        )
+
+        st.plotly_chart(fig)
+
+    if(selected == "Ordenar por Procedimento mais Comum"):
+        dados = load_data()
+        dados['TEMPO_DT'] = dados['SP_DTSAIDA'] - dados['SP_DTINTER']
+        
+        agrupa = dados.groupby('SP_N_PROC').agg(
+            QTD = ('SP_QT_PROC', 'sum'),
+            MEDIA_DT = ('TEMPO_DT', 'mean')
+        )
+        
+        ordem = agrupa.sort_values('QTD')
+        print(ordem)
+        
+        fig = px.bar(ordem, y=ordem.index, x='MEDIA_DT', color = 'MEDIA_DT' ,barmode = 'group', title="Procedimentos Com Maior Tempo Médio de Internação").update_layout(
+            xaxis_title="Tempo Médio de Internação", 
+            yaxis_title="Nome do Procedimento",
+            #yaxis={'categoryorder': 'total ascending'},
+            height=650,
+            width=1150
+        )
+
+        st.plotly_chart(fig)
+
+
+
+
+
+
+
+with st.container():
     dados = load_data()
+    st.write("---")
 
     dados['TEMPO_DT'] = dados['SP_DTSAIDA'] - dados['SP_DTINTER']
 
     agrupa = dados.groupby('SP_N_PROC').agg(
-        QTD = ('SP_QT_PROC', 'sum'),
-        MEDIA_DT = ('TEMPO_DT', 'mean')
+    QTD = ('SP_QT_PROC', 'sum'),
+    MEDIA_DT = ('TEMPO_DT', 'mean')
     )
 
-    maiores = agrupa.nlargest(20, 'QTD')
-
-    ordenado = maiores.sort_values(by= 'QTD', ascending = False)
-
-    fig = px.bar(maiores, y=maiores.index, x='MEDIA_DT', barmode = 'group', title="Tempo Médio de Internação dos 10 Procedimentos mais Comuns").update_layout(
-        xaxis_title="Média de Tempo de Internação em Dias", 
-        yaxis_title="Nome do Procedimento",
-        yaxis={'categoryorder': 'total ascending'},
-        height=650,
-        width=1000
-    )
-
-    st.plotly_chart(fig)
-
-with st.container():
-    procedimentos = dados['SP_N_PROC'].value_counts().reset_index()
-    procedimentos.columns = ['Procedimento', 'Frequência']
-
-
-    fig = px.bar(procedimentos, x='Procedimento', y='Frequência',
-        title='Frequência dos Procedimentos Realizados por Tipo',
-        labels={'Procedimento': 'Tipo de Procedimento', 'Frequência': 'Quantidade'},
-        color='Frequência').update_layout(height=1000)
+    fig = px.bar(agrupa, x=agrupa.index, y='QTD',
+                 title='Frequência dos Procedimentos Realizados',
+                 color='QTD').update_layout(
+                    xaxis_title="Nome do Procedimento", 
+                    yaxis_title="Quantidade",
+                    xaxis={'categoryorder': 'total descending'},
+                    height=1000)
     
     st.plotly_chart(fig)
 
+
+
+
+
 with st.container():
     df = load_data()
+    st.write("---")
     df['SP_DTINTER'] = pd.to_datetime(df['SP_DTINTER'], format='%Y%m%d', errors='coerce')
     df['SP_DTSAIDA'] = pd.to_datetime(df['SP_DTSAIDA'], format='%Y%m%d', errors='coerce')
 
@@ -72,7 +116,15 @@ with st.container():
 
     st.plotly_chart(fig)
 
+
+
+
+
+
 with st.container():
+    st.write("---")
+
+    df = load_data()
     df['SP_DTINTER'] = pd.to_datetime(df['SP_DTINTER'], format='%Y%m%d')
     df = df[(df['SP_DTINTER'].dt.month == 8) & (df['SP_DTINTER'].dt.year == 2023)]
 
